@@ -1,8 +1,8 @@
 import { supabase } from '../supabaseConfig.js';
-import { components } from '../builder/components';
-import { initCanvas, addComponent } from '../builder/canvas';
-import { initProperties } from '../builder/properties';
-import { exportSite } from '../builder/export';
+import { components } from '../builder/components.js';
+import { initCanvas, addComponent } from '../builder/canvas.js';
+import { initProperties } from '../builder/properties.js';
+import { exportSite } from '../builder/export.js';
 
 export function builderPage(user) {
   setTimeout(() => {
