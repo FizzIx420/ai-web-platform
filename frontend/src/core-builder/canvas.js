@@ -1,4 +1,4 @@
-import { components } from './components.js';
+import { components } from './component.js';
 
 export function initCanvas() {
   const canvas = document.getElementById('canvas');
