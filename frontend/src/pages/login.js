@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase';
+import { supabase } from '../supabaseConfig.js'; // Updated path
 
 export function loginPage() {
   return `

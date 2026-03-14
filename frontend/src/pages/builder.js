@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase';
+import { supabase } from '../supabaseConfig.js';
 import { components } from '../builder/components';
 import { initCanvas, addComponent } from '../builder/canvas';
 import { initProperties } from '../builder/properties';

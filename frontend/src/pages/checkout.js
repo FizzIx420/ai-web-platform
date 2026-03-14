@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase';
+import { supabase } from '../supabaseConfig.js';
 import { getCart, clearCart } from '../utils/cart';
 
 export function checkoutPage(user) {

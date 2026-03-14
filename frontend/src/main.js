@@ -1,6 +1,6 @@
 import './styles/main.css';
 import { loadRoute } from './router';
-import { supabase } from './utils/supabase';
+import { supabase } from './supabaseConfig.js'; // Updated path
 
 // Check authentication status
 async function init() {

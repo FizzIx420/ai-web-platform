@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase';
+import { supabase } from '../supabaseConfig.js';
 import { addToCart } from '../utils/cart';
 
 export async function templatePage(id) {
