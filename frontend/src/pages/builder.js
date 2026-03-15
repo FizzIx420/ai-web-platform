@@ -1,3 +1,4 @@
+import '../styles/builder.css';
 import { supabase } from '../supabaseConfig.js';
 import { components } from '../core-builder/component.js';
 import { initCanvas, addComponent } from '../core-builder/canvas.js';
