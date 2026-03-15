@@ -1,4 +1,4 @@
-import { components } from './components.js';
+import { components } from './component.js';
 
 let selectedElement = null;
 let draggedElement = null;
