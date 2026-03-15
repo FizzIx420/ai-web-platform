@@ -1,62 +1,88 @@
 import { getSelectedElement } from './canvas.js';
 
 export function initProperties() {
-  // Set up event listeners for property inputs
-  document.getElementById('prop-text')?.addEventListener('input', updateText);
-  document.getElementById('prop-color')?.addEventListener('input', updateColor);
-  document.getElementById('prop-delete')?.addEventListener('click', deleteElement);
+  // No static listeners needed now – we rebuild panel on selection
 }
 
 export function loadProperties(el) {
-  const textInput = document.getElementById('prop-text');
-  const colorInput = document.getElementById('prop-color');
-  
-  // Find first heading or paragraph to edit
-  const textElement = el.querySelector('h1, h2, h3, h4, p, span, button');
-  if (textElement) {
-    textInput.value = textElement.innerText;
-  } else {
-    textInput.value = '';
-  }
+  const panel = document.getElementById('properties-panel');
+  if (!panel) return;
 
-  // Get background color if exists
-  const bgColor = window.getComputedStyle(el).backgroundColor;
-  if (bgColor && bgColor !== 'rgba(0, 0, 0, 0)') {
-    // Convert rgb to hex if needed (simplified)
-    colorInput.value = rgbToHex(bgColor);
-  } else {
-    colorInput.value = '#6366f1';
-  }
+  // Clear panel except maybe the header
+  panel.innerHTML = `
+    <h3>Properties</h3>
+    <div id="prop-fields"></div>
+    <hr />
+    <button onclick="deleteSelected()" class="btn btn-danger">Delete</button>
+  `;
+
+  const fieldsContainer = document.getElementById('prop-fields');
+
+  // Find all elements with data-editable attribute
+  const editableElements = el.querySelectorAll('[data-editable]');
+  
+  editableElements.forEach((elem, index) => {
+    const key = elem.getAttribute('data-editable');
+    const tag = elem.tagName.toLowerCase();
+    const currentText = elem.innerText;
+    const currentSrc = elem.src; // for images
+    
+    if (tag === 'img') {
+      // Image source editable
+      const fieldId = `prop-${key}-${index}`;
+      fieldsContainer.innerHTML += `
+        <label>${key} (image URL)</label>
+        <input type="text" id="${fieldId}" value="${currentSrc || ''}" placeholder="Image URL" />
+      `;
+      // Add event listener after element is added
+      setTimeout(() => {
+        document.getElementById(fieldId)?.addEventListener('input', (e) => {
+          elem.src = e.target.value;
+        });
+      }, 0);
+    } else {
+      // Text content editable
+      const fieldId = `prop-${key}-${index}`;
+      fieldsContainer.innerHTML += `
+        <label>${key}</label>
+        <input type="text" id="${fieldId}" value="${currentText.replace(/"/g, '&quot;')}" />
+      `;
+      setTimeout(() => {
+        document.getElementById(fieldId)?.addEventListener('input', (e) => {
+          elem.innerText = e.target.value;
+        });
+      }, 0);
+    }
+  });
+
+  // Add color picker for background
+  fieldsContainer.innerHTML += `
+    <label>Background Color</label>
+    <input type="color" id="prop-bgcolor" value="${rgbToHex(el.style.backgroundColor) || '#6366f1'}" />
+  `;
+  setTimeout(() => {
+    document.getElementById('prop-bgcolor')?.addEventListener('input', (e) => {
+      el.style.backgroundColor = e.target.value;
+    });
+  }, 0);
 }
 
 function rgbToHex(rgb) {
-  // Simplified conversion
+  if (!rgb || rgb === '') return '#6366f1';
   const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
   if (!match) return '#6366f1';
   return '#' + ((1 << 24) + (parseInt(match[1]) << 16) + (parseInt(match[2]) << 8) + parseInt(match[3])).toString(16).slice(1);
 }
 
-function updateText(e) {
-  const el = getSelectedElement();
-  if (!el) return;
-  const textEl = el.querySelector('h1, h2, h3, h4, p, span, button');
-  if (textEl) textEl.innerText = e.target.value;
-}
-
-function updateColor(e) {
-  const el = getSelectedElement();
-  if (!el) return;
-  el.style.backgroundColor = e.target.value;
-}
-
-function deleteElement() {
+// Delete function
+window.deleteSelected = () => {
   const el = getSelectedElement();
   if (el && confirm('Delete this component?')) {
     el.remove();
-    document.getElementById('prop-text').value = '';
-    document.getElementById('prop-color').value = '#6366f1';
+    // Clear properties panel
+    document.getElementById('properties-panel').innerHTML = `
+      <h3>Properties</h3>
+      <p>Select a component to edit</p>
+    `;
   }
-}
-
-// Expose globally for buttons
-window.deleteSelected = deleteElement;
+};

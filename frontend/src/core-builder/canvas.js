@@ -2,6 +2,8 @@ import { components } from './component.js';
 
 let selectedElement = null;
 let draggedElement = null;
+let resizeHandle = null;
+let startX, startY, startWidth, startHeight;
 
 export function initCanvas() {
   const canvas = document.getElementById('canvas');
@@ -14,14 +16,12 @@ function handleDrop(e) {
   e.preventDefault();
   const name = e.dataTransfer.getData('text/plain');
   if (name && name !== 'move') {
-    // Add new component
     addComponent(name);
   } else if (draggedElement) {
-    // Move existing component
+    // Reorder existing component
     const canvas = document.getElementById('canvas');
-    const mouseX = e.clientX;
     const mouseY = e.clientY;
-    const elements = Array.from(canvas.children);
+    const elements = Array.from(canvas.children).filter(el => !el.classList.contains('resize-handle'));
     let insertBefore = null;
     for (let el of elements) {
       const rect = el.getBoundingClientRect();
@@ -31,6 +31,7 @@ function handleDrop(e) {
       }
     }
     canvas.insertBefore(draggedElement, insertBefore);
+    draggedElement.classList.remove('dragging');
     draggedElement = null;
   }
 }
@@ -42,18 +43,25 @@ export function addComponent(name) {
   div.setAttribute('draggable', true);
   div.classList.add('builder-component');
   div.dataset.type = name;
+  
+  // Make children non-draggable
+  div.querySelectorAll('*').forEach(el => el.setAttribute('draggable', false));
+  
   div.addEventListener('click', (e) => {
     e.stopPropagation();
     selectElement(div);
   });
+  
   div.addEventListener('dragstart', (e) => {
     e.dataTransfer.setData('text/plain', 'move');
     draggedElement = div;
     div.classList.add('dragging');
   });
+  
   div.addEventListener('dragend', () => {
     div.classList.remove('dragging');
   });
+  
   canvas.appendChild(div);
 }
 
@@ -63,29 +71,68 @@ function selectElement(el) {
   deselectAll();
   el.classList.add('selected');
   selectedElement = el;
-  // Populate properties panel
-  updatePropertiesPanel(el);
+  
+  // Add resize handle
+  addResizeHandle(el);
+  
+  // Update properties panel
+  import('./properties').then(module => module.loadProperties(el));
 }
 
 function deselectAll() {
   document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
-  selectedElement = null;
-  clearPropertiesPanel();
-}
-
-function clearPropertiesPanel() {
-  const panel = document.getElementById('properties-panel');
-  if (panel) {
-    // Keep the structure but clear values (implementation in properties.js)
+  if (selectedElement) {
+    removeResizeHandle();
+    selectedElement = null;
   }
 }
 
-function updatePropertiesPanel(el) {
-  // Delegate to properties module
-  import('./properties').then(module => module.loadProperties(el));
+function addResizeHandle(el) {
+  removeResizeHandle();
+  const handle = document.createElement('div');
+  handle.className = 'resize-handle';
+  handle.innerHTML = '↘️';
+  el.appendChild(handle);
+  
+  handle.addEventListener('mousedown', initResize);
+  resizeHandle = handle;
 }
 
-// Expose for properties panel
+function removeResizeHandle() {
+  if (resizeHandle) {
+    resizeHandle.remove();
+    resizeHandle = null;
+  }
+}
+
+function initResize(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const el = selectedElement;
+  const rect = el.getBoundingClientRect();
+  startX = e.clientX;
+  startY = e.clientY;
+  startWidth = rect.width;
+  startHeight = rect.height;
+  
+  document.addEventListener('mousemove', resize);
+  document.addEventListener('mouseup', stopResize);
+}
+
+function resize(e) {
+  if (!selectedElement) return;
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+  selectedElement.style.width = (startWidth + dx) + 'px';
+  selectedElement.style.height = (startHeight + dy) + 'px';
+}
+
+function stopResize() {
+  document.removeEventListener('mousemove', resize);
+  document.removeEventListener('mouseup', stopResize);
+}
+
 export function getSelectedElement() {
   return selectedElement;
 }
