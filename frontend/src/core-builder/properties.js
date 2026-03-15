@@ -1,88 +1,90 @@
-import { getSelectedElement } from './canvas.js';
+import { getSelectedComponent, updateComponent } from './canvas.js';
+import { componentSchemas } from './componentSchemas.js';
 
-export function initProperties() {
-  // No static listeners needed now – we rebuild panel on selection
-}
-
-export function loadProperties(el) {
+export function loadProperties(comp) {
   const panel = document.getElementById('properties-panel');
   if (!panel) return;
 
-  // Clear panel except maybe the header
-  panel.innerHTML = `
-    <h3>Properties</h3>
-    <div id="prop-fields"></div>
-    <hr />
-    <button onclick="deleteSelected()" class="btn btn-danger">Delete</button>
-  `;
+  const schema = componentSchemas[comp.type];
+  if (!schema) return;
+
+  let html = `<h3>Edit ${schema.label}</h3>`;
+  html += `<div id="prop-fields"></div>`;
+  html += `<hr /><button onclick="deleteSelected()" class="btn btn-danger">Delete</button>`;
+
+  panel.innerHTML = html;
 
   const fieldsContainer = document.getElementById('prop-fields');
 
-  // Find all elements with data-editable attribute
-  const editableElements = el.querySelectorAll('[data-editable]');
-  
-  editableElements.forEach((elem, index) => {
-    const key = elem.getAttribute('data-editable');
-    const tag = elem.tagName.toLowerCase();
-    const currentText = elem.innerText;
-    const currentSrc = elem.src; // for images
+  // Generate inputs for each editable field
+  schema.editableFields.forEach(field => {
+    const value = getValueByPath(comp, field.path);
+    const fieldId = `prop_${field.path.replace(/\./g, '_')}`;
     
-    if (tag === 'img') {
-      // Image source editable
-      const fieldId = `prop-${key}-${index}`;
-      fieldsContainer.innerHTML += `
-        <label>${key} (image URL)</label>
-        <input type="text" id="${fieldId}" value="${currentSrc || ''}" placeholder="Image URL" />
-      `;
-      // Add event listener after element is added
-      setTimeout(() => {
-        document.getElementById(fieldId)?.addEventListener('input', (e) => {
-          elem.src = e.target.value;
-        });
-      }, 0);
-    } else {
-      // Text content editable
-      const fieldId = `prop-${key}-${index}`;
-      fieldsContainer.innerHTML += `
-        <label>${key}</label>
-        <input type="text" id="${fieldId}" value="${currentText.replace(/"/g, '&quot;')}" />
-      `;
-      setTimeout(() => {
-        document.getElementById(fieldId)?.addEventListener('input', (e) => {
-          elem.innerText = e.target.value;
-        });
-      }, 0);
+    switch (field.type) {
+      case 'text':
+        fieldsContainer.innerHTML += `
+          <label>${field.label}</label>
+          <input type="text" id="${fieldId}" value="${value || ''}" />
+        `;
+        break;
+      case 'color':
+        fieldsContainer.innerHTML += `
+          <label>${field.label}</label>
+          <input type="color" id="${fieldId}" value="${value || '#6366f1'}" />
+        `;
+        break;
+      case 'select':
+        let options = field.options.map(opt => `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`).join('');
+        fieldsContainer.innerHTML += `
+          <label>${field.label}</label>
+          <select id="${fieldId}">${options}</select>
+        `;
+        break;
+      case 'range':
+        fieldsContainer.innerHTML += `
+          <label>${field.label} <span id="${fieldId}_val">${value || 0}</span>${field.unit || ''}</label>
+          <input type="range" id="${fieldId}" min="${field.min}" max="${field.max}" value="${value || 0}" step="1" />
+        `;
+        break;
     }
   });
 
-  // Add color picker for background
-  fieldsContainer.innerHTML += `
-    <label>Background Color</label>
-    <input type="color" id="prop-bgcolor" value="${rgbToHex(el.style.backgroundColor) || '#6366f1'}" />
-  `;
+  // Add listeners after DOM is updated
   setTimeout(() => {
-    document.getElementById('prop-bgcolor')?.addEventListener('input', (e) => {
-      el.style.backgroundColor = e.target.value;
+    schema.editableFields.forEach(field => {
+      const fieldId = `prop_${field.path.replace(/\./g, '_')}`;
+      const input = document.getElementById(fieldId);
+      if (!input) return;
+
+      input.addEventListener('input', (e) => {
+        const newComp = JSON.parse(JSON.stringify(comp));
+        let val = e.target.value;
+        if (field.type === 'range') {
+          document.getElementById(fieldId + '_val').innerText = val;
+          val += field.unit || '';
+        }
+        setValueByPath(newComp, field.path, val);
+        updateComponent(newComp);
+      });
     });
   }, 0);
 }
 
-function rgbToHex(rgb) {
-  if (!rgb || rgb === '') return '#6366f1';
-  const match = rgb.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)\)$/);
-  if (!match) return '#6366f1';
-  return '#' + ((1 << 24) + (parseInt(match[1]) << 16) + (parseInt(match[2]) << 8) + parseInt(match[3])).toString(16).slice(1);
+// Helper to get nested value
+function getValueByPath(obj, path) {
+  return path.split('.').reduce((o, p) => o && o[p], obj);
 }
 
-// Delete function
+// Helper to set nested value
+function setValueByPath(obj, path, value) {
+  const parts = path.split('.');
+  const last = parts.pop();
+  const target = parts.reduce((o, p) => o[p] = o[p] || {}, obj);
+  target[last] = value;
+}
+
 window.deleteSelected = () => {
-  const el = getSelectedElement();
-  if (el && confirm('Delete this component?')) {
-    el.remove();
-    // Clear properties panel
-    document.getElementById('properties-panel').innerHTML = `
-      <h3>Properties</h3>
-      <p>Select a component to edit</p>
-    `;
-  }
+  // Implementation in canvas.js – we'll call a global function
+  if (window.deleteSelectedComponent) window.deleteSelectedComponent();
 };

@@ -1,100 +1,135 @@
 import { components } from './component.js';
+import { componentSchemas } from './componentSchemas.js';
+import { renderComponent } from './renderer.js';
 
-let selectedElement = null;
-let draggedElement = null;
+let componentsData = []; // Array of { id, type, x, y, width, height, content, styles }
+let selectedId = null;
+let draggedId = null;
+let dragOffsetX, dragOffsetY;
 let resizeHandle = null;
-let startX, startY, startWidth, startHeight;
+let startX, startY, startWidth, startHeight, startLeft, startTop;
+
+const GRID_SIZE = 10; // Snap to 10px grid
 
 export function initCanvas() {
   const canvas = document.getElementById('canvas');
+  canvas.style.position = 'relative';
+  canvas.style.height = '800px'; // or whatever
+  canvas.style.background = '#f0f0f0';
   canvas.addEventListener('dragover', (e) => e.preventDefault());
   canvas.addEventListener('drop', handleDrop);
   canvas.addEventListener('click', () => deselectAll());
+  renderAllComponents();
+}
+
+function renderAllComponents() {
+  const canvas = document.getElementById('canvas');
+  canvas.innerHTML = ''; // Clear and re-render
+  componentsData.forEach(comp => {
+    const el = renderComponent(comp);
+    el.setAttribute('data-id', comp.id);
+    el.style.position = 'absolute';
+    el.style.left = comp.x + 'px';
+    el.style.top = comp.y + 'px';
+    el.style.width = comp.width + 'px';
+    el.style.height = comp.height + 'px';
+    el.style.cursor = 'move';
+    el.addEventListener('mousedown', (e) => startDrag(e, comp.id));
+    el.addEventListener('click', (e) => { e.stopPropagation(); selectComponent(comp.id); });
+    canvas.appendChild(el);
+  });
+}
+
+function startDrag(e, id) {
+  e.preventDefault();
+  draggedId = id;
+  const comp = componentsData.find(c => c.id === id);
+  const rect = e.target.getBoundingClientRect();
+  dragOffsetX = e.clientX - rect.left;
+  dragOffsetY = e.clientY - rect.top;
+  document.addEventListener('mousemove', onDrag);
+  document.addEventListener('mouseup', stopDrag);
+}
+
+function onDrag(e) {
+  if (!draggedId) return;
+  const canvas = document.getElementById('canvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  let newX = e.clientX - canvasRect.left - dragOffsetX;
+  let newY = e.clientY - canvasRect.top - dragOffsetY;
+  // Snap to grid
+  newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
+  newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
+  // Clamp within canvas
+  newX = Math.max(0, Math.min(newX, canvasRect.width - componentsData.find(c => c.id === draggedId).width));
+  newY = Math.max(0, Math.min(newY, canvasRect.height - componentsData.find(c => c.id === draggedId).height));
+  
+  const comp = componentsData.find(c => c.id === draggedId);
+  comp.x = newX;
+  comp.y = newY;
+  renderAllComponents();
+}
+
+function stopDrag() {
+  document.removeEventListener('mousemove', onDrag);
+  document.removeEventListener('mouseup', stopDrag);
+  draggedId = null;
 }
 
 function handleDrop(e) {
   e.preventDefault();
-  const name = e.dataTransfer.getData('text/plain');
-  if (name && name !== 'move') {
-    addComponent(name);
-  } else if (draggedElement) {
-    // Reorder existing component
+  const type = e.dataTransfer.getData('text/plain');
+  if (type && componentSchemas[type]) {
     const canvas = document.getElementById('canvas');
-    const mouseY = e.clientY;
-    const elements = Array.from(canvas.children).filter(el => !el.classList.contains('resize-handle'));
-    let insertBefore = null;
-    for (let el of elements) {
-      const rect = el.getBoundingClientRect();
-      if (mouseY < rect.top + rect.height / 2) {
-        insertBefore = el;
-        break;
-      }
-    }
-    canvas.insertBefore(draggedElement, insertBefore);
-    draggedElement.classList.remove('dragging');
-    draggedElement = null;
+    const canvasRect = canvas.getBoundingClientRect();
+    const x = e.clientX - canvasRect.left;
+    const y = e.clientY - canvasRect.top;
+    // Snap to grid
+    const snappedX = Math.round(x / GRID_SIZE) * GRID_SIZE;
+    const snappedY = Math.round(y / GRID_SIZE) * GRID_SIZE;
+    
+    const newComponent = {
+      id: 'comp_' + Date.now() + Math.random(),
+      type: type,
+      x: snappedX,
+      y: snappedY,
+      width: 400, // default width
+      height: 300, // default height
+      content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
+      styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
+    };
+    componentsData.push(newComponent);
+    renderAllComponents();
   }
 }
 
-export function addComponent(name) {
-  const canvas = document.getElementById('canvas');
-  const div = document.createElement('div');
-  div.innerHTML = components[name];
-  div.setAttribute('draggable', true);
-  div.classList.add('builder-component');
-  div.dataset.type = name;
-  
-  // Make children non-draggable
-  div.querySelectorAll('*').forEach(el => el.setAttribute('draggable', false));
-  
-  div.addEventListener('click', (e) => {
-    e.stopPropagation();
-    selectElement(div);
-  });
-  
-  div.addEventListener('dragstart', (e) => {
-    e.dataTransfer.setData('text/plain', 'move');
-    draggedElement = div;
-    div.classList.add('dragging');
-  });
-  
-  div.addEventListener('dragend', () => {
-    div.classList.remove('dragging');
-  });
-  
-  canvas.appendChild(div);
-}
-
-window.addComponent = addComponent;
-
-function selectElement(el) {
+function selectComponent(id) {
   deselectAll();
-  el.classList.add('selected');
-  selectedElement = el;
-  
+  selectedId = id;
+  const el = document.querySelector(`[data-id="${id}"]`);
+  if (el) el.classList.add('selected');
   // Add resize handle
-  addResizeHandle(el);
-  
-  // Update properties panel
-  import('./properties').then(module => module.loadProperties(el));
+  addResizeHandle(id);
+  // Load into properties panel
+  import('./properties').then(module => module.loadProperties(componentsData.find(c => c.id === id)));
 }
 
 function deselectAll() {
-  document.querySelectorAll('.selected').forEach(e => e.classList.remove('selected'));
-  if (selectedElement) {
+  document.querySelectorAll('.selected').forEach(el => el.classList.remove('selected'));
+  if (selectedId) {
     removeResizeHandle();
-    selectedElement = null;
+    selectedId = null;
   }
 }
 
-function addResizeHandle(el) {
+function addResizeHandle(id) {
   removeResizeHandle();
+  const el = document.querySelector(`[data-id="${id}"]`);
   const handle = document.createElement('div');
   handle.className = 'resize-handle';
   handle.innerHTML = '↘️';
   el.appendChild(handle);
-  
-  handle.addEventListener('mousedown', initResize);
+  handle.addEventListener('mousedown', (e) => startResize(e, id));
   resizeHandle = handle;
 }
 
@@ -105,34 +140,55 @@ function removeResizeHandle() {
   }
 }
 
-function initResize(e) {
+function startResize(e, id) {
   e.preventDefault();
   e.stopPropagation();
-  
-  const el = selectedElement;
-  const rect = el.getBoundingClientRect();
+  const comp = componentsData.find(c => c.id === id);
+  startWidth = comp.width;
+  startHeight = comp.height;
+  startLeft = comp.x;
+  startTop = comp.y;
   startX = e.clientX;
   startY = e.clientY;
-  startWidth = rect.width;
-  startHeight = rect.height;
-  
-  document.addEventListener('mousemove', resize);
+  document.addEventListener('mousemove', onResize);
   document.addEventListener('mouseup', stopResize);
 }
 
-function resize(e) {
-  if (!selectedElement) return;
+function onResize(e) {
+  if (!selectedId) return;
+  const comp = componentsData.find(c => c.id === selectedId);
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
-  selectedElement.style.width = (startWidth + dx) + 'px';
-  selectedElement.style.height = (startHeight + dy) + 'px';
+  let newWidth = startWidth + dx;
+  let newHeight = startHeight + dy;
+  // Snap to grid
+  newWidth = Math.round(newWidth / GRID_SIZE) * GRID_SIZE;
+  newHeight = Math.round(newHeight / GRID_SIZE) * GRID_SIZE;
+  // Minimum size
+  newWidth = Math.max(50, newWidth);
+  newHeight = Math.max(50, newHeight);
+  comp.width = newWidth;
+  comp.height = newHeight;
+  renderAllComponents();
+  // Re-select to keep handle
+  selectComponent(selectedId);
 }
 
 function stopResize() {
-  document.removeEventListener('mousemove', resize);
+  document.removeEventListener('mousemove', onResize);
   document.removeEventListener('mouseup', stopResize);
 }
 
-export function getSelectedElement() {
-  return selectedElement;
+export function getSelectedComponent() {
+  return componentsData.find(c => c.id === selectedId);
+}
+
+export function updateComponent(updatedData) {
+  const index = componentsData.findIndex(c => c.id === updatedData.id);
+  if (index !== -1) {
+    componentsData[index] = updatedData;
+    renderAllComponents();
+    // Re-select to update properties panel
+    selectComponent(updatedData.id);
+  }
 }
