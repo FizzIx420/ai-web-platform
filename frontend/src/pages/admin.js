@@ -1,4 +1,4 @@
-import { supabase } from '../utils/supabase';
+import { supabase } from '../supabaseConfig.js';
 
 export async function adminPage(user) {
   // Check if user is admin (you'll need a role column in profiles)
