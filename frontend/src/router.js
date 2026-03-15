@@ -1,13 +1,13 @@
-import { homePage } from './pages/home';
-import { loginPage } from './pages/login';
-import { registerPage } from './pages/register';
-import { dashboardPage } from './pages/dashboard';
-import { marketplacePage } from './pages/marketplace';
-import { templatePage } from './pages/template';
-import { cartPage } from './pages/cart';
-import { checkoutPage } from './pages/checkout';
-import { builderPage } from './pages/builder';
-import { adminPage } from './pages/admin';
+import { homePage } from './pages/home.js';
+import { loginPage } from './pages/login.js';
+import { registerPage } from './pages/register.js';
+import { dashboardPage } from './pages/dashboard.js';
+import { marketplacePage } from './pages/marketplace.js';
+import { templatePage } from './pages/template.js';
+import { cartPage } from './pages/cart.js';
+import { checkoutPage } from './pages/checkout.js';
+import { builderPage } from './pages/builder.js';
+import { adminPage } from './pages/admin.js';
 
 export async function loadRoute(route, session) {
   const publicRoutes = ['home', 'login', 'register', 'marketplace', 'template', 'cart'];
