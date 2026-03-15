@@ -47,7 +47,7 @@ export const componentSchemas = {
     ],
     // Elements that can be added/removed inside this component (e.g., extra buttons, images)
     childElements: [
-      { type: 'button', label: 'Add Button', defaultContent: { text: 'New Button', link: '#' }, defaultStyles: { ... } }
+      { type: 'button', label: 'Add Button', defaultContent: { text: 'New Button', link: '#' }, defaultStyles: { background: '#ffffff', color: '#4f46e5', border: 'none', padding: '10px 30px', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' } }
     ]
   },
   features: {
