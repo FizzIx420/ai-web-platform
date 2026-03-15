@@ -1,5 +1,5 @@
 import { supabase } from '../supabaseConfig.js';
-import { getCart, removeFromCart, clearCart } from '../utils/cart';
+import { getCart, removeFromCart, clearCart } from '../utils/cart.js';
 
 export async function cartPage() {
   const cartIds = getCart();
@@ -30,6 +30,11 @@ export async function cartPage() {
 
 window.removeItem = (id) => {
   removeFromCart(id);
+  window.location.reload();
+};
+
+window.additem = (id) => {
+  addToCart(id);
   window.location.reload();
 };
 
