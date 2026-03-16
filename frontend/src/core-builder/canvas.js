@@ -9,7 +9,6 @@ let dragOffsetX, dragOffsetY;
 let resizeHandle = null;
 let startX, startY, startWidth, startHeight;
 
-// Panning variables
 let isPanning = false;
 let panStartX, panStartY, scrollStartX, scrollStartY;
 
@@ -20,6 +19,8 @@ const SNAP_RADIUS = 25;
 export function initCanvas() {
   const canvas = document.getElementById('canvas');
   canvas.style.position = 'relative';
+  canvas.style.backgroundSize = 'cover';
+  canvas.style.backgroundPosition = 'center';
   canvas.addEventListener('dragover', (e) => e.preventDefault());
   canvas.addEventListener('drop', handleDrop);
   
@@ -27,9 +28,8 @@ export function initCanvas() {
     if (e.target.id === 'canvas' || e.target.id === 'virtual-space') deselectAll(); 
   });
 
-  // RIGHT-CLICK PANNING LOGIC
   canvas.addEventListener('mousedown', (e) => {
-    if (e.button === 2 || e.button === 1) { // Right or Middle click
+    if (e.button === 2 || e.button === 1) {
       e.preventDefault();
       isPanning = true;
       panStartX = e.clientX;
@@ -54,9 +54,7 @@ export function initCanvas() {
     }
   });
 
-  // Prevent context menu from ruining the right-click drag
   canvas.addEventListener('contextmenu', e => e.preventDefault());
-
   renderAllComponents();
 }
 
@@ -76,7 +74,7 @@ function renderAllComponents() {
     
     el.addEventListener('mousedown', (e) => {
       if (e.target.isContentEditable || e.target.tagName === 'INPUT') return;
-      if (e.button === 0) startDrag(e, comp.id); // Only drag on Left Click
+      if (e.button === 0) startDrag(e, comp.id);
     });
     
     el.addEventListener('click', (e) => { 
@@ -108,27 +106,15 @@ function onDrag(e) {
   newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
   newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
 
-  // 4-WAY MAGNETIC SNAPPING
   componentsData.forEach(other => {
     if (other.id === draggedId) return;
-    
-    // Vertical Snapping (Top/Bottom)
-    if (Math.abs((newY + comp.height + SNAP_PADDING) - other.y) < SNAP_RADIUS) {
-      newY = other.y - comp.height - SNAP_PADDING;
-    } else if (Math.abs(newY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) {
-      newY = other.y + other.height + SNAP_PADDING;
-    } else if (Math.abs(newY - other.y) < SNAP_RADIUS) {
-      newY = other.y; // Align Tops exactly
-    }
+    if (Math.abs((newY + comp.height + SNAP_PADDING) - other.y) < SNAP_RADIUS) newY = other.y - comp.height - SNAP_PADDING;
+    else if (Math.abs(newY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) newY = other.y + other.height + SNAP_PADDING;
+    else if (Math.abs(newY - other.y) < SNAP_RADIUS) newY = other.y; 
 
-    // Horizontal Snapping (Left/Right)
-    if (Math.abs((newX + comp.width + SNAP_PADDING) - other.x) < SNAP_RADIUS) {
-      newX = other.x - comp.width - SNAP_PADDING;
-    } else if (Math.abs(newX - (other.x + other.width + SNAP_PADDING)) < SNAP_RADIUS) {
-      newX = other.x + other.width + SNAP_PADDING;
-    } else if (Math.abs(newX - other.x) < SNAP_RADIUS) {
-      newX = other.x; // Align Lefts exactly
-    }
+    if (Math.abs((newX + comp.width + SNAP_PADDING) - other.x) < SNAP_RADIUS) newX = other.x - comp.width - SNAP_PADDING;
+    else if (Math.abs(newX - (other.x + other.width + SNAP_PADDING)) < SNAP_RADIUS) newX = other.x + other.width + SNAP_PADDING;
+    else if (Math.abs(newX - other.x) < SNAP_RADIUS) newX = other.x; 
   });
 
   comp.x = Math.max(0, newX);
@@ -150,18 +136,12 @@ function handleDrop(e) {
     let snappedX = Math.round((e.clientX - canvas.getBoundingClientRect().left + canvas.scrollLeft) / GRID_SIZE) * GRID_SIZE;
     let snappedY = Math.round((e.clientY - canvas.getBoundingClientRect().top + canvas.scrollTop) / GRID_SIZE) * GRID_SIZE;
     
-    const baseW = 800;
-    const baseH = 350;
-
     const newComponent = {
       id: 'comp_' + Date.now() + Math.random(),
       type: type,
       x: Math.max(0, snappedX),
       y: Math.max(0, snappedY),
-      baseWidth: baseW, // Saves the native resolution for the scaler
-      baseHeight: baseH,
-      width: baseW, 
-      height: baseH, 
+      width: 800, height: 350, 
       content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
       styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
     };
@@ -171,9 +151,7 @@ function handleDrop(e) {
 }
 
 function selectComponent(id) {
-  // If we click the already selected component, don't wipe the properties panel
   if (selectedId === id) return; 
-  
   deselectAll();
   selectedId = id;
   const el = document.querySelector(`[data-id="${id}"]`);
@@ -187,9 +165,9 @@ function deselectAll() {
   if (selectedId) {
     removeResizeHandle();
     selectedId = null;
-    const panel = document.getElementById('properties-panel');
-    if (panel) panel.innerHTML = `<h3>Properties</h3><p>Select a component to edit</p>`;
   }
+  // Load empty properties to show Canvas settings
+  import('./properties.js').then(module => module.loadProperties(null));
 }
 
 function addResizeHandle(id) {
@@ -227,18 +205,16 @@ function onResize(e) {
   if (!selectedId) return;
   const comp = componentsData.find(c => c.id === selectedId);
   const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
   
-  // Lock Aspect Ratio while scaling so text doesn't warp
-  let newWidth = Math.max(200, startWidth + dx);
-  let scaleMultiplier = newWidth / startWidth;
-  let newHeight = startHeight * scaleMultiplier;
+  // FREE WILL RESIZING: Width and Height move entirely independently!
+  let newWidth = Math.round((startWidth + dx) / GRID_SIZE) * GRID_SIZE;
+  let newHeight = Math.round((startHeight + dy) / GRID_SIZE) * GRID_SIZE;
 
-  comp.width = newWidth;
-  comp.height = newHeight;
+  comp.width = Math.max(200, newWidth);
+  comp.height = Math.max(100, newHeight);
   
   renderAllComponents();
-  
-  // Keep the component visually selected without reloading the properties panel
   const el = document.querySelector(`[data-id="${selectedId}"]`);
   if (el) el.classList.add('selected');
   addResizeHandle(selectedId);
@@ -251,7 +227,6 @@ function stopResize() {
 
 export function getSelectedComponent() { return componentsData.find(c => c.id === selectedId); }
 
-// THE FIX: Added reloadProps boolean so typing in textboxes doesn't wipe focus
 export function updateComponent(updatedData, reloadProps = true) {
   const index = componentsData.findIndex(c => c.id === updatedData.id);
   if (index !== -1) {
@@ -270,16 +245,12 @@ export function updateComponent(updatedData, reloadProps = true) {
 export function addComponent(type) {
   if (type && componentSchemas[type]) {
     const canvas = document.getElementById('canvas');
-    const baseW = 800;
-    const baseH = 350;
     const newComponent = {
       id: 'comp_' + Date.now() + Math.random(),
       type: type,
       x: canvas.scrollLeft + 50,
       y: canvas.scrollTop + 50,
-      baseWidth: baseW,
-      baseHeight: baseH,
-      width: baseW, height: baseH,
+      width: 800, height: 350,
       content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
       styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
     };
@@ -294,6 +265,16 @@ export function deleteSelectedComponent() {
   deselectAll();
   renderAllComponents();
 }
+
+// THE MEMORY FIX: This safely saves text changes instantly when you click away
+window.updateText = (id, path, text) => {
+  const comp = componentsData.find(c => c.id === id);
+  if (!comp) return;
+  const parts = path.split('.');
+  const last = parts.pop();
+  const target = parts.reduce((o, p) => o[p] = o[p] || {}, comp);
+  target[last] = text;
+};
 
 window.addComponent = addComponent;
 window.deleteSelectedComponent = deleteSelectedComponent;

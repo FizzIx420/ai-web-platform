@@ -1,19 +1,16 @@
-// Component schemas – define editable fields and default values
+// frontend/src/core-builder/componentSchemas.js
 export const componentSchemas = {
   hero: {
     type: 'hero',
     label: 'Hero Section',
-    defaultContent: {
-      title: 'Hero Title',
-      subtitle: 'Double click to edit text directly',
-      buttonText: 'Learn More'
-    },
+    defaultContent: { title: 'Hero Title', subtitle: 'Type here, then resize. It stays forever.', buttonText: 'Learn More' },
     defaultStyles: {
-      container: {
-        background: '#4f46e5', padding: '40px',
-        fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column',
-        justifyContent: 'flex-start', alignItems: 'center', boxSizing: 'border-box',
-        borderRadius: '8px', boxShadow: 'none', backdropFilter: 'none'
+      container: { 
+        background: '#4f46e5', backgroundImage: '', backgroundSize: 'cover', backgroundPosition: 'center',
+        padding: '40px', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', 
+        justifyContent: 'center', alignItems: 'center', boxSizing: 'border-box', 
+        borderTopLeftRadius: '0px', borderTopRightRadius: '0px', borderBottomRightRadius: '0px', borderBottomLeftRadius: '0px',
+        boxShadow: 'none', backdropFilter: 'none' 
       },
       title: { fontSize: '3rem', color: '#ffffff', marginBottom: '1rem', marginTop: '0', textAlign: 'center', width: '100%' },
       subtitle: { fontSize: '1.2rem', color: '#ffffff', marginBottom: '2rem', textAlign: 'center', width: '100%' },
@@ -21,14 +18,15 @@ export const componentSchemas = {
     },
     editableFields: [
       { type: 'color', path: 'styles.container.background', label: 'Background Color' },
+      { type: 'text', path: 'styles.container.backgroundImage', label: 'Background Image (URL)' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
       { type: 'color', path: 'styles.subtitle.color', label: 'Subtitle Color' },
-      { type: 'number', path: 'styles.container.borderRadius', label: 'Shape Roundness', min: 0, max: 150, unit: 'px' },
-      { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.04)'] },
-      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
-      { type: 'color', path: 'styles.button.background', label: 'Button Color' },
-      { type: 'color', path: 'styles.button.color', label: 'Button Text Color' },
-      { type: 'number', path: 'styles.button.borderRadius', label: 'Button Shape', min: 0, max: 50, unit: 'px' }
+      { type: 'number', path: 'styles.container.borderTopLeftRadius', label: 'Top Left Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopRightRadius', label: 'Top Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomRightRadius', label: 'Bottom Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomLeftRadius', label: 'Bottom Left Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
+      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] }
     ]
   },
   features: {
@@ -43,10 +41,12 @@ export const componentSchemas = {
       ]
     },
     defaultStyles: {
-      container: {
-        background: '#f9fafb', padding: '40px', fontFamily: 'sans-serif',
-        display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', boxSizing: 'border-box',
-        borderRadius: '8px', boxShadow: 'none', backdropFilter: 'none'
+      container: { 
+        background: '#f9fafb', backgroundImage: '', backgroundSize: 'cover', backgroundPosition: 'center',
+        padding: '40px', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', 
+        justifyContent: 'center', boxSizing: 'border-box', 
+        borderTopLeftRadius: '0px', borderTopRightRadius: '0px', borderBottomRightRadius: '0px', borderBottomLeftRadius: '0px',
+        boxShadow: 'none', backdropFilter: 'none' 
       },
       title: { fontSize: '2.5rem', color: '#111827', textAlign: 'center', marginBottom: '2.5rem', marginTop: '0', width: '100%' },
       featureGrid: { display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' },
@@ -56,13 +56,15 @@ export const componentSchemas = {
       featureDesc: { fontSize: '1rem', color: '#64748b', margin: '0' }
     },
     editableFields: [
-      { type: 'color', path: 'styles.container.background', label: 'Background' },
+      { type: 'color', path: 'styles.container.background', label: 'Background Color' },
+      { type: 'text', path: 'styles.container.backgroundImage', label: 'Background Image (URL)' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
-      { type: 'number', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopLeftRadius', label: 'Top Left Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopRightRadius', label: 'Top Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomRightRadius', label: 'Bottom Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomLeftRadius', label: 'Bottom Left Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
-      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
-      { type: 'color', path: 'styles.featureCard.background', label: 'Card Background' },
-      { type: 'number', path: 'styles.featureCard.borderRadius', label: 'Card Shape', min: 0, max: 50, unit: 'px' }
+      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] }
     ]
   },
   pricing: {
@@ -77,9 +79,12 @@ export const componentSchemas = {
     },
     defaultStyles: {
       container: { 
-        background: '#ffffff', padding: '40px', fontFamily: 'sans-serif', 
+        background: '#ffffff', backgroundImage: '', backgroundSize: 'cover', backgroundPosition: 'center',
+        padding: '40px', fontFamily: 'sans-serif', 
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center',
-        boxSizing: 'border-box', borderRadius: '8px', boxShadow: 'none', backdropFilter: 'none'
+        boxSizing: 'border-box', 
+        borderTopLeftRadius: '0px', borderTopRightRadius: '0px', borderBottomRightRadius: '0px', borderBottomLeftRadius: '0px',
+        boxShadow: 'none', backdropFilter: 'none'
       },
       title: { fontSize: '2.5rem', color: '#111827', textAlign: 'center', marginBottom: '2.5rem', marginTop: '0', width: '100%' },
       planGrid: { display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' },
@@ -90,11 +95,15 @@ export const componentSchemas = {
       planFeatures: { listStyle: 'none', padding: '0', margin: '0', color: '#475569', lineHeight: '2', textAlign: 'center' }
     },
     editableFields: [
-      { type: 'color', path: 'styles.container.background', label: 'Background' },
+      { type: 'color', path: 'styles.container.background', label: 'Background Color' },
+      { type: 'text', path: 'styles.container.backgroundImage', label: 'Background Image (URL)' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
-      { type: 'number', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopLeftRadius', label: 'Top Left Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopRightRadius', label: 'Top Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomRightRadius', label: 'Bottom Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomLeftRadius', label: 'Bottom Left Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
-      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
+      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
       { type: 'color', path: 'styles.planCard.background', label: 'Card Background' },
       { type: 'color', path: 'styles.planPrice.color', label: 'Price Accent Color' },
       { type: 'number', path: 'styles.planCard.borderRadius', label: 'Card Shape', min: 0, max: 50, unit: 'px' }
@@ -112,9 +121,12 @@ export const componentSchemas = {
     },
     defaultStyles: {
       container: { 
-        background: '#f8fafc', padding: '40px', fontFamily: 'sans-serif', 
+        background: '#f8fafc', backgroundImage: '', backgroundSize: 'cover', backgroundPosition: 'center',
+        padding: '40px', fontFamily: 'sans-serif', 
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center',
-        boxSizing: 'border-box', borderRadius: '8px', boxShadow: 'none', backdropFilter: 'none'
+        boxSizing: 'border-box', 
+        borderTopLeftRadius: '0px', borderTopRightRadius: '0px', borderBottomRightRadius: '0px', borderBottomLeftRadius: '0px',
+        boxShadow: 'none', backdropFilter: 'none'
       },
       title: { fontSize: '2.5rem', color: '#111827', textAlign: 'center', marginBottom: '2rem', marginTop: '0', width: '100%' },
       form: { width: '100%', maxWidth: '500px', display: 'flex', flexDirection: 'column', gap: '15px' },
@@ -122,11 +134,15 @@ export const componentSchemas = {
       button: { background: '#4f46e5', color: '#ffffff', border: 'none', padding: '12px', width: '100%', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1.1rem' }
     },
     editableFields: [
-      { type: 'color', path: 'styles.container.background', label: 'Background' },
+      { type: 'color', path: 'styles.container.background', label: 'Background Color' },
+      { type: 'text', path: 'styles.container.backgroundImage', label: 'Background Image (URL)' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
-      { type: 'number', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopLeftRadius', label: 'Top Left Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopRightRadius', label: 'Top Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomRightRadius', label: 'Bottom Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomLeftRadius', label: 'Bottom Left Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
-      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
+      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
       { type: 'color', path: 'styles.button.background', label: 'Button Color' },
       { type: 'number', path: 'styles.input.borderRadius', label: 'Input Field Shape', min: 0, max: 25, unit: 'px' },
       { type: 'number', path: 'styles.button.borderRadius', label: 'Button Shape', min: 0, max: 50, unit: 'px' }
@@ -145,20 +161,27 @@ export const componentSchemas = {
     },
     defaultStyles: {
       container: { 
-        background: '#ffffff', padding: '40px', fontFamily: 'sans-serif', 
+        background: '#ffffff', backgroundImage: '', backgroundSize: 'cover', backgroundPosition: 'center',
+        padding: '40px', fontFamily: 'sans-serif', 
         display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center',
-        boxSizing: 'border-box', borderRadius: '8px', boxShadow: 'none', backdropFilter: 'none'
+        boxSizing: 'border-box', 
+        borderTopLeftRadius: '0px', borderTopRightRadius: '0px', borderBottomRightRadius: '0px', borderBottomLeftRadius: '0px',
+        boxShadow: 'none', backdropFilter: 'none'
       },
       title: { fontSize: '2.5rem', color: '#111827', textAlign: 'center', marginBottom: '2rem', marginTop: '0', width: '100%' },
       grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', width: '100%' },
       image: { width: '100%', height: '250px', objectFit: 'cover', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }
     },
     editableFields: [
-      { type: 'color', path: 'styles.container.background', label: 'Background' },
+      { type: 'color', path: 'styles.container.background', label: 'Background Color' },
+      { type: 'text', path: 'styles.container.backgroundImage', label: 'Background Image (URL)' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
-      { type: 'number', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopLeftRadius', label: 'Top Left Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderTopRightRadius', label: 'Top Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomRightRadius', label: 'Bottom Right Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderBottomLeftRadius', label: 'Bottom Left Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
-      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
+      { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
       { type: 'number', path: 'styles.image.borderRadius', label: 'Image Roundness', min: 0, max: 150, unit: 'px' }
     ]
   }
