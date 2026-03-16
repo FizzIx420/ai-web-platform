@@ -192,3 +192,43 @@ export function updateComponent(updatedData) {
     selectComponent(updatedData.id);
   }
 }
+
+// --- NEW ADDITIONS FOR CLICK AND DELETE ---
+
+export function addComponent(type) {
+  if (type && componentSchemas[type]) {
+    const newComponent = {
+      id: 'comp_' + Date.now() + Math.random(),
+      type: type,
+      x: 50,  // Auto-spawn slightly offset from the top left
+      y: 50,
+      width: 400,
+      height: 300,
+      content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
+      styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
+    };
+    componentsData.push(newComponent);
+    renderAllComponents();
+  }
+}
+
+export function deleteSelectedComponent() {
+  if (!selectedId) return;
+  
+  // Filter out the deleted component
+  componentsData = componentsData.filter(c => c.id !== selectedId);
+  selectedId = null;
+  
+  // Reset the properties panel UI
+  const panel = document.getElementById('properties-panel');
+  if (panel) {
+    panel.innerHTML = `<h3>Properties</h3><p>Select a component to edit</p>`;
+  }
+  
+  // Re-render the canvas
+  renderAllComponents();
+}
+
+// Bind them to the window so inline HTML buttons can see them
+window.addComponent = addComponent;
+window.deleteSelectedComponent = deleteSelectedComponent;

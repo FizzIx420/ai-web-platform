@@ -11,9 +11,9 @@ export function builderPage(user) {
     initCanvas();
   }, 0);
 
-  // Generate component buttons from schemas
+  // Generate component buttons supporting BOTH click and drag
   const componentButtons = Object.keys(componentSchemas).map(type => 
-    `<button draggable="true" ondragstart="dragStart(event, '${type}')">${componentSchemas[type].label}</button>`
+    `<button draggable="true" ondragstart="dragStart(event, '${type}')" onclick="addComponent('${type}')">${componentSchemas[type].label}</button>`
   ).join('');
 
   return `
@@ -35,10 +35,4 @@ export function builderPage(user) {
 // Make drag start global
 window.dragStart = (e, type) => {
   e.dataTransfer.setData('text/plain', type);
-};
-
-// Global delete function
-window.deleteSelectedComponent = () => {
-  // To be implemented – need to access componentsData
-  alert('Delete will be implemented in canvas');
 };

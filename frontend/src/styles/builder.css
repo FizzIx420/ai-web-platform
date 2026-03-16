@@ -14,256 +14,103 @@
 #components-panel {
   width: 240px;
   background: var(--surface-glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
   padding: 1.5rem 1rem;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  z-index: 50; /* Keep sidebar above canvas */
 }
 
-#components-panel h3 {
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-  color: var(--text-primary);
-  font-weight: 600;
-}
+#components-panel h3 { font-size: 1.1rem; margin-bottom: 1rem; font-weight: 600; }
 
 #components-panel button {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: var(--text-primary);
-  font-weight: 500;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: var(--transition);
-  text-align: left;
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  box-shadow: var(--shadow-sm);
+  width: 100%; padding: 0.75rem 1rem;
+  background: white; border: 1px solid #e2e8f0;
+  border-radius: 8px; cursor: pointer;
+  transition: all 0.2s; text-align: left;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
 
 #components-panel button:hover {
-  background: var(--primary-light);
-  color: white;
-  border-color: var(--primary);
+  background: #4f46e5; color: white; border-color: #4f46e5;
   transform: translateX(4px);
 }
 
 /* ===== Canvas ===== */
 #canvas {
   flex: 1;
-  background: rgba(255, 255, 255, 0.5);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  padding: 2rem;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
   position: relative;
+  background: #f8fafc;
+  /* Cool grid background */
+  background-image: 
+    linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
+  background-size: 10px 10px;
+  overflow: auto;
 }
 
-#canvas .builder-component {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border: 2px dashed transparent;
-  border-radius: var(--radius-sm);
-  padding: 1rem;
-  transition: var(--transition);
-  cursor: move;
-  box-shadow: var(--shadow-sm);
-}
-
-#canvas .builder-component.selected {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
-}
-
-#canvas .builder-component:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--primary-light);
-}
-
-/* ===== Properties Panel ===== */
-#properties-panel {
-  width: 280px;
-  background: var(--surface-glass);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-  border-left: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 1.5rem 1rem;
-  overflow-y: auto;
-}
-
-#properties-panel h3 {
-  font-size: 1.1rem;
-  margin-bottom: 1.5rem;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-#properties-panel input,
-#properties-panel select,
-#properties-panel textarea {
-  background: rgba(255, 255, 255, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: var(--text-primary);
-  margin-bottom: 1rem;
-}
-
-#properties-panel input[type="color"] {
-  height: 40px;
-  padding: 0.25rem;
-  cursor: pointer;
-}
-
-#properties-panel button {
-  width: 100%;
-  margin-bottom: 0.75rem;
-  background: var(--primary);
-  color: white;
-  border: none;
-}
-
-#properties-panel button:hover {
-  background: var(--primary-dark);
-}
-
-/* ===== Draggable Placeholder ===== */
-.builder-component.dragging {
-  opacity: 0.5;
-  transform: scale(0.98);
-}
-
-/* ===== Responsive Builder ===== */
-@media (max-width: 768px) {
-  #builder {
-    flex-direction: column;
-    height: auto;
-  }
-  
-  #components-panel {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid rgba(255,255,255,0.2);
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 1rem;
-  }
-  
-  #components-panel button {
-    width: auto;
-    white-space: nowrap;
-  }
-  
-  #properties-panel {
-    width: 100%;
-    border-left: none;
-    border-top: 1px solid rgba(255,255,255,0.2);
-  }
-}
-
+/* ===== The Draggable Components ===== */
 .builder-component {
-  position: relative;
+  position: absolute; /* Crucial for positioning */
+  box-sizing: border-box; /* Crucial so padding doesn't overflow width */
+  user-select: none;
+  transition: box-shadow 0.2s;
+  box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+  border-radius: 8px;
+  overflow: hidden; /* Hides overflowing text when shrunk */
+  z-index: 1; /* Default stack level */
 }
+
+/* Selected state - pops to the top */
+.builder-component.selected {
+  outline: 3px solid #4f46e5;
+  outline-offset: -3px; /* Outline goes inward, preventing layout shift */
+  z-index: 10 !important; /* Forces selected item above everything else */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* ===== Resize Handle ===== */
 .resize-handle {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 20px;
-  height: 20px;
-  background: rgba(0,0,0,0.3);
+  bottom: 0;
+  right: 0;
+  width: 24px;
+  height: 24px;
+  background: #4f46e5;
   color: white;
-  border-radius: 4px;
+  border-top-left-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: nwse-resize;
   font-size: 14px;
-  user-select: none;
-  z-index: 10;
-}
-.resize-handle:hover {
-  background: var(--primary);
+  z-index: 20;
+  opacity: 0; /* Hidden until selected */
+  transition: opacity 0.2s, transform 0.2s;
 }
 
-.builder-component {
-  position: relative;
-  transition: box-shadow 0.2s;
-}
-.builder-component.selected {
-  outline: 3px solid var(--primary);
-  outline-offset: 2px;
-}
-.resize-handle {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 24px;
-  height: 24px;
-  background: var(--primary);
-  color: white;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: nwse-resize;
-  font-size: 16px;
-  user-select: none;
-  z-index: 100;
-  opacity: 0.8;
-}
-.resize-handle:hover {
+.builder-component.selected .resize-handle {
   opacity: 1;
+}
+
+.resize-handle:hover {
   transform: scale(1.1);
 }
 
-#canvas {
-  position: relative;
-  background: #e0e0e0;
-  background-image: linear-gradient(rgba(0,0,0,0.05) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(0,0,0,0.05) 1px, transparent 1px);
-  background-size: 10px 10px; /* Shows grid */
-  min-height: 600px;
-  overflow: auto;
+/* ===== Properties Panel ===== */
+#properties-panel {
+  width: 280px;
+  background: white;
+  border-left: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
+  z-index: 50;
 }
 
-.builder-component {
-  position: absolute;
-  box-sizing: border-box;
-  cursor: move;
-  user-select: none;
-}
-
-.builder-component.selected {
-  outline: 3px solid var(--primary);
-  outline-offset: 2px;
-}
-
-.resize-handle {
-  position: absolute;
-  bottom: 5px;
-  right: 5px;
-  width: 24px;
-  height: 24px;
-  background: var(--primary);
-  color: white;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: nwse-resize;
-  font-size: 16px;
-  z-index: 100;
-  opacity: 0.8;
-}
-.resize-handle:hover {
-  opacity: 1;
-  transform: scale(1.1);
+#properties-panel h3 { margin-bottom: 1.5rem; font-weight: 600; }
+#properties-panel input, #properties-panel select, #properties-panel textarea {
+  width: 100%; margin-bottom: 1rem; padding: 8px;
+  border: 1px solid #cbd5e1; border-radius: 4px;
 }

@@ -1,4 +1,4 @@
-import { componentSchemas } from './componentSchemas';
+import { componentSchemas } from './componentSchemas.js';
 
 export function renderComponent(comp) {
   const schema = componentSchemas[comp.type];
@@ -11,7 +11,7 @@ export function renderComponent(comp) {
   // Apply container styles
   Object.assign(container.style, styles.container);
 
-  // Build inner HTML based on type
+  // Build inner HTML based on type using the fixed styleToString
   switch (comp.type) {
     case 'hero':
       container.innerHTML = `
@@ -88,6 +88,11 @@ export function renderComponent(comp) {
   return container;
 }
 
+// THE FIX: Converts camelCase (fontSize) to valid CSS kebab-case (font-size)
 function styleToString(styleObj) {
-  return Object.entries(styleObj).map(([key, val]) => `${key}: ${val}`).join('; ');
+  if (!styleObj) return '';
+  return Object.entries(styleObj).map(([key, val]) => {
+    const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
+    return `${kebabKey}: ${val}`;
+  }).join('; ');
 }
