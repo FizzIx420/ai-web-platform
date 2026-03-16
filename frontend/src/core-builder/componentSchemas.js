@@ -5,60 +5,52 @@ export const componentSchemas = {
     label: 'Hero Section',
     defaultContent: {
       title: 'Hero Title',
-      subtitle: 'Hero description goes here',
-      buttonText: 'Learn More',
-      buttonLink: '#'
+      subtitle: 'Click here to edit this text directly',
+      buttonText: 'Learn More'
     },
     defaultStyles: {
       container: {
-        background: '#4f46e5',
-        color: '#ffffff',
-        padding: '20px',
-        textAlign: 'center',
-        fontFamily: 'sans-serif',
-        display: 'flex',          // Added for scaling
-        flexDirection: 'column',  // Added for scaling
-        justifyContent: 'center', // Added for scaling
-        alignItems: 'center'      // Added for scaling
+        background: '#4f46e5', color: '#ffffff', padding: '40px',
+        fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column',
+        justifyContent: 'flex-start', /* Anchors top */
+        alignItems: 'center',         /* Centers horizontally */
+        boxSizing: 'border-box'
       },
-      title: { fontSize: '2.5rem', marginBottom: '1rem', marginTop: '0' },
-      subtitle: { fontSize: '1.2rem', marginBottom: '2rem' },
-      button: { background: '#ffffff', color: '#4f46e5', border: 'none', padding: '10px 30px', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }
+      title: { fontSize: '3rem', marginBottom: '1rem', marginTop: '0', textAlign: 'center', width: '100%' },
+      subtitle: { fontSize: '1.2rem', marginBottom: '2rem', textAlign: 'center', width: '100%' },
+      button: { background: '#ffffff', color: '#4f46e5', border: 'none', padding: '12px 35px', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }
     },
     editableFields: [
-      { type: 'text', path: 'content.title', label: 'Title' },
-      { type: 'text', path: 'content.subtitle', label: 'Subtitle' },
-      { type: 'text', path: 'content.buttonText', label: 'Button Text' },
       { type: 'color', path: 'styles.container.background', label: 'Background Color' },
-      { type: 'color', path: 'styles.container.color', label: 'Text Color' },
-      { type: 'range', path: 'styles.title.fontSize', label: 'Title Size', min: 10, max: 100, unit: 'px' }
+      { type: 'color', path: 'styles.container.color', label: 'Text Color' }
     ]
   },
   features: {
     type: 'features',
     label: 'Features Section',
     defaultContent: {
-      title: 'Features',
+      title: 'Awesome Features',
       features: [
-        { title: 'Feature 1', description: 'Description 1', icon: '🚀' },
-        { title: 'Feature 2', description: 'Description 2', icon: '⚡' },
-        { title: 'Feature 3', description: 'Description 3', icon: '🌟' }
+        { title: 'Feature 1', description: 'Fully editable modular text', icon: '🚀' },
+        { title: 'Feature 2', description: 'Snaps automatically', icon: '⚡' },
+        { title: 'Feature 3', description: 'Anchors perfectly', icon: '🌟' }
       ]
     },
     defaultStyles: {
       container: {
-        background: '#f9fafb', padding: '30px 20px', fontFamily: 'sans-serif',
-        display: 'flex', flexDirection: 'column', justifyContent: 'center'
+        background: '#f9fafb', padding: '40px', fontFamily: 'sans-serif',
+        display: 'flex', flexDirection: 'column',
+        justifyContent: 'flex-start', /* Anchors top */
+        boxSizing: 'border-box'
       },
-      title: { fontSize: '2rem', textAlign: 'center', marginBottom: '2rem', marginTop: '0' },
-      featureGrid: { display: 'flex', gap: '15px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' },
-      featureCard: { flex: '1', minWidth: '150px', textAlign: 'center', padding: '15px', background: '#ffffff', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' },
-      featureIcon: { fontSize: '2rem', marginBottom: '0.5rem' },
-      featureTitle: { fontSize: '1.2rem', marginBottom: '0.5rem', marginTop: '0' },
-      featureDesc: { fontSize: '0.9rem', color: '#666', margin: '0' }
+      title: { fontSize: '2.5rem', textAlign: 'center', marginBottom: '2.5rem', marginTop: '0', width: '100%' },
+      featureGrid: { display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' },
+      featureCard: { flex: '1', minWidth: '200px', textAlign: 'center', padding: '25px', background: '#ffffff', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)' },
+      featureIcon: { fontSize: '2.5rem', marginBottom: '1rem' },
+      featureTitle: { fontSize: '1.4rem', marginBottom: '0.5rem', marginTop: '0' },
+      featureDesc: { fontSize: '1rem', color: '#64748b', margin: '0' }
     },
     editableFields: [
-      { type: 'text', path: 'content.title', label: 'Section Title' },
       { type: 'color', path: 'styles.container.background', label: 'Background' }
     ]
   },
@@ -73,7 +65,7 @@ export const componentSchemas = {
       ]
     },
     defaultStyles: {
-      container: { background: '#ffffff', padding: '30px 20px', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+      container: { background: '#ffffff', padding: '30px 20px', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' },
       title: { fontSize: '2rem', textAlign: 'center', marginBottom: '2rem', marginTop: '0' },
       planGrid: { display: 'flex', gap: '20px', justifyContent: 'center', flexWrap: 'wrap', width: '100%' },
       planCard: { border: '1px solid #ddd', padding: '20px', borderRadius: '10px', flex: '1', minWidth: '200px', background: '#fff' },
@@ -97,7 +89,7 @@ export const componentSchemas = {
       buttonText: 'Send Message'
     },
     defaultStyles: {
-      container: { background: '#f3f4f6', padding: '30px 20px', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center' },
+      container: { background: '#f3f4f6', padding: '30px 20px', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' },
       title: { fontSize: '2rem', textAlign: 'center', marginBottom: '1rem', marginTop: '0' },
       form: { width: '100%', maxWidth: '400px', display: 'flex', flexDirection: 'column', gap: '10px' },
       input: { width: '100%', padding: '10px', border: '1px solid #ccc', borderRadius: '5px', boxSizing: 'border-box' },
@@ -120,7 +112,7 @@ export const componentSchemas = {
       ]
     },
     defaultStyles: {
-      container: { padding: '30px 20px', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', justifyContent: 'center' },
+      container: { padding: '30px 20px', fontFamily: 'sans-serif', display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' },
       title: { fontSize: '2rem', textAlign: 'center', marginBottom: '1rem', marginTop: '0' },
       grid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(100px, 1fr))', gap: '10px', width: '100%' },
       image: { width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }

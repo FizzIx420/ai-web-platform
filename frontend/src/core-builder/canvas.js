@@ -2,19 +2,22 @@ import { components } from './component.js';
 import { componentSchemas } from './componentSchemas.js';
 import { renderComponent } from './renderer.js';
 
-let componentsData = []; // Array of { id, type, x, y, width, height, content, styles }
+let componentsData = []; 
 let selectedId = null;
 let draggedId = null;
 let dragOffsetX, dragOffsetY;
 let resizeHandle = null;
-let startX, startY, startWidth, startHeight, startLeft, startTop;
+let startX, startY, startWidth, startHeight;
 
-const GRID_SIZE = 10; // Snap to 10px grid
+const GRID_SIZE = 10; 
+const SNAP_PADDING = 10; // The padding between components
+const SNAP_RADIUS = 25;  // How close before the magnet activates
 
 export function initCanvas() {
   const canvas = document.getElementById('canvas');
   canvas.style.position = 'relative';
-  canvas.style.height = '800px'; // or whatever
+  canvas.style.minHeight = '2000px'; // Massively expanded canvas
+  canvas.style.width = '100%';
   canvas.style.background = '#f0f0f0';
   canvas.addEventListener('dragover', (e) => e.preventDefault());
   canvas.addEventListener('drop', handleDrop);
@@ -24,7 +27,7 @@ export function initCanvas() {
 
 function renderAllComponents() {
   const canvas = document.getElementById('canvas');
-  canvas.innerHTML = ''; // Clear and re-render
+  canvas.innerHTML = ''; 
   componentsData.forEach(comp => {
     const el = renderComponent(comp);
     el.setAttribute('data-id', comp.id);
@@ -34,8 +37,17 @@ function renderAllComponents() {
     el.style.width = comp.width + 'px';
     el.style.height = comp.height + 'px';
     el.style.cursor = 'move';
-    el.addEventListener('mousedown', (e) => startDrag(e, comp.id));
-    el.addEventListener('click', (e) => { e.stopPropagation(); selectComponent(comp.id); });
+    
+    // THE FIX: Allow clicking into text/inputs without triggering a drag!
+    el.addEventListener('mousedown', (e) => {
+      if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      startDrag(e, comp.id);
+    });
+    
+    el.addEventListener('click', (e) => { 
+      if (!e.target.isContentEditable) e.stopPropagation(); 
+      selectComponent(comp.id); 
+    });
     canvas.appendChild(el);
   });
 }
@@ -43,8 +55,7 @@ function renderAllComponents() {
 function startDrag(e, id) {
   e.preventDefault();
   draggedId = id;
-  const comp = componentsData.find(c => c.id === id);
-  const rect = e.target.getBoundingClientRect();
+  const rect = e.target.closest('.builder-component').getBoundingClientRect();
   dragOffsetX = e.clientX - rect.left;
   dragOffsetY = e.clientY - rect.top;
   document.addEventListener('mousemove', onDrag);
@@ -55,18 +66,38 @@ function onDrag(e) {
   if (!draggedId) return;
   const canvas = document.getElementById('canvas');
   const canvasRect = canvas.getBoundingClientRect();
+  const comp = componentsData.find(c => c.id === draggedId);
+  
   let newX = e.clientX - canvasRect.left - dragOffsetX;
   let newY = e.clientY - canvasRect.top - dragOffsetY;
-  // Snap to grid
+
+  // 1. Basic Grid Snap
   newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
   newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
-  // Clamp within canvas
-  newX = Math.max(0, Math.min(newX, canvasRect.width - componentsData.find(c => c.id === draggedId).width));
-  newY = Math.max(0, Math.min(newY, canvasRect.height - componentsData.find(c => c.id === draggedId).height));
+
+  // 2. MAGNETIC SNAPPING ENGINE
+  componentsData.forEach(other => {
+    if (other.id === draggedId) return;
+
+    // Snap Bottom of Dragged to Top of Other
+    if (Math.abs((newY + comp.height + SNAP_PADDING) - other.y) < SNAP_RADIUS) {
+      newY = other.y - comp.height - SNAP_PADDING;
+    }
+    // Snap Top of Dragged to Bottom of Other
+    else if (Math.abs(newY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) {
+      newY = other.y + other.height + SNAP_PADDING;
+    }
+
+    // Snap X-Axis (Align Left Edges)
+    if (Math.abs(newX - other.x) < SNAP_RADIUS) {
+      newX = other.x;
+    }
+  });
+
+  // Clamp within canvas boundaries
+  comp.x = Math.max(0, Math.min(newX, canvasRect.width - comp.width));
+  comp.y = Math.max(0, newY); 
   
-  const comp = componentsData.find(c => c.id === draggedId);
-  comp.x = newX;
-  comp.y = newY;
   renderAllComponents();
 }
 
@@ -82,19 +113,25 @@ function handleDrop(e) {
   if (type && componentSchemas[type]) {
     const canvas = document.getElementById('canvas');
     const canvasRect = canvas.getBoundingClientRect();
-    const x = e.clientX - canvasRect.left;
-    const y = e.clientY - canvasRect.top;
-    // Snap to grid
-    const snappedX = Math.round(x / GRID_SIZE) * GRID_SIZE;
-    const snappedY = Math.round(y / GRID_SIZE) * GRID_SIZE;
+    let snappedX = Math.round((e.clientX - canvasRect.left) / GRID_SIZE) * GRID_SIZE;
+    let snappedY = Math.round((e.clientY - canvasRect.top) / GRID_SIZE) * GRID_SIZE;
     
+    const newWidth = 800; // Better default width for website sections
+    const newHeight = 350;
+
+    // Magnetic snap on initial drop
+    componentsData.forEach(other => {
+      if (Math.abs(snappedY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) snappedY = other.y + other.height + SNAP_PADDING;
+      if (Math.abs(snappedX - other.x) < SNAP_RADIUS) snappedX = other.x;
+    });
+
     const newComponent = {
       id: 'comp_' + Date.now() + Math.random(),
       type: type,
       x: snappedX,
       y: snappedY,
-      width: 400, // default width
-      height: 300, // default height
+      width: newWidth, 
+      height: newHeight, 
       content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
       styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
     };
@@ -103,15 +140,15 @@ function handleDrop(e) {
   }
 }
 
+// ... Keep your selectComponent, addResizeHandle, startResize, onResize, stopResize, etc. exactly as they were!
+
 function selectComponent(id) {
   deselectAll();
   selectedId = id;
   const el = document.querySelector(`[data-id="${id}"]`);
   if (el) el.classList.add('selected');
-  // Add resize handle
   addResizeHandle(id);
-  // Load into properties panel
-  import('./properties').then(module => module.loadProperties(componentsData.find(c => c.id === id)));
+  import('./properties.js').then(module => module.loadProperties(componentsData.find(c => c.id === id)));
 }
 
 function deselectAll() {
@@ -146,8 +183,6 @@ function startResize(e, id) {
   const comp = componentsData.find(c => c.id === id);
   startWidth = comp.width;
   startHeight = comp.height;
-  startLeft = comp.x;
-  startTop = comp.y;
   startX = e.clientX;
   startY = e.clientY;
   document.addEventListener('mousemove', onResize);
@@ -159,18 +194,13 @@ function onResize(e) {
   const comp = componentsData.find(c => c.id === selectedId);
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
-  let newWidth = startWidth + dx;
-  let newHeight = startHeight + dy;
-  // Snap to grid
-  newWidth = Math.round(newWidth / GRID_SIZE) * GRID_SIZE;
-  newHeight = Math.round(newHeight / GRID_SIZE) * GRID_SIZE;
-  // Minimum size
-  newWidth = Math.max(50, newWidth);
-  newHeight = Math.max(50, newHeight);
-  comp.width = newWidth;
-  comp.height = newHeight;
+  
+  let newWidth = Math.round((startWidth + dx) / GRID_SIZE) * GRID_SIZE;
+  let newHeight = Math.round((startHeight + dy) / GRID_SIZE) * GRID_SIZE;
+  
+  comp.width = Math.max(150, newWidth);
+  comp.height = Math.max(100, newHeight);
   renderAllComponents();
-  // Re-select to keep handle
   selectComponent(selectedId);
 }
 
@@ -179,31 +209,22 @@ function stopResize() {
   document.removeEventListener('mouseup', stopResize);
 }
 
-export function getSelectedComponent() {
-  return componentsData.find(c => c.id === selectedId);
-}
-
+export function getSelectedComponent() { return componentsData.find(c => c.id === selectedId); }
 export function updateComponent(updatedData) {
   const index = componentsData.findIndex(c => c.id === updatedData.id);
   if (index !== -1) {
     componentsData[index] = updatedData;
     renderAllComponents();
-    // Re-select to update properties panel
     selectComponent(updatedData.id);
   }
 }
-
-// --- NEW ADDITIONS FOR CLICK AND DELETE ---
 
 export function addComponent(type) {
   if (type && componentSchemas[type]) {
     const newComponent = {
       id: 'comp_' + Date.now() + Math.random(),
       type: type,
-      x: 50,  // Auto-spawn slightly offset from the top left
-      y: 50,
-      width: 400,
-      height: 300,
+      x: 50, y: 50, width: 800, height: 350,
       content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
       styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
     };
@@ -214,21 +235,12 @@ export function addComponent(type) {
 
 export function deleteSelectedComponent() {
   if (!selectedId) return;
-  
-  // Filter out the deleted component
   componentsData = componentsData.filter(c => c.id !== selectedId);
   selectedId = null;
-  
-  // Reset the properties panel UI
   const panel = document.getElementById('properties-panel');
-  if (panel) {
-    panel.innerHTML = `<h3>Properties</h3><p>Select a component to edit</p>`;
-  }
-  
-  // Re-render the canvas
+  if (panel) panel.innerHTML = `<h3>Properties</h3><p>Select a component to edit</p>`;
   renderAllComponents();
 }
 
-// Bind them to the window so inline HTML buttons can see them
 window.addComponent = addComponent;
 window.deleteSelectedComponent = deleteSelectedComponent;
