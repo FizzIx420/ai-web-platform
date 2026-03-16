@@ -10,24 +10,29 @@ let resizeHandle = null;
 let startX, startY, startWidth, startHeight;
 
 const GRID_SIZE = 10; 
-const SNAP_PADDING = 10; // The padding between components
-const SNAP_RADIUS = 25;  // How close before the magnet activates
+const SNAP_PADDING = 10; 
+const SNAP_RADIUS = 25;  
 
 export function initCanvas() {
   const canvas = document.getElementById('canvas');
   canvas.style.position = 'relative';
-  canvas.style.minHeight = '2000px'; // Massively expanded canvas
-  canvas.style.width = '100%';
-  canvas.style.background = '#f0f0f0';
+  // REMOVED the locked minHeight that broke scrolling!
   canvas.addEventListener('dragover', (e) => e.preventDefault());
   canvas.addEventListener('drop', handleDrop);
-  canvas.addEventListener('click', () => deselectAll());
+  
+  // Clicking the empty canvas deselects components
+  canvas.addEventListener('click', (e) => { 
+    if (e.target.id === 'canvas' || e.target.id === 'virtual-space') deselectAll(); 
+  });
   renderAllComponents();
 }
 
 function renderAllComponents() {
   const canvas = document.getElementById('canvas');
-  canvas.innerHTML = ''; 
+  
+  // THE FIX: Inject a massive, invisible 4000x4000 div to force native browser scrolling!
+  canvas.innerHTML = '<div id="virtual-space" style="position: absolute; width: 4000px; height: 4000px; top: 0; left: 0; pointer-events: none;"></div>'; 
+  
   componentsData.forEach(comp => {
     const el = renderComponent(comp);
     el.setAttribute('data-id', comp.id);
@@ -38,7 +43,6 @@ function renderAllComponents() {
     el.style.height = comp.height + 'px';
     el.style.cursor = 'move';
     
-    // THE FIX: Allow clicking into text/inputs without triggering a drag!
     el.addEventListener('mousedown', (e) => {
       if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
       startDrag(e, comp.id);
@@ -65,39 +69,30 @@ function startDrag(e, id) {
 function onDrag(e) {
   if (!draggedId) return;
   const canvas = document.getElementById('canvas');
-  const canvasRect = canvas.getBoundingClientRect();
   const comp = componentsData.find(c => c.id === draggedId);
   
-  let newX = e.clientX - canvasRect.left - dragOffsetX;
-  let newY = e.clientY - canvasRect.top - dragOffsetY;
+  // Account for canvas scroll position!
+  let newX = e.clientX - canvas.getBoundingClientRect().left + canvas.scrollLeft - dragOffsetX;
+  let newY = e.clientY - canvas.getBoundingClientRect().top + canvas.scrollTop - dragOffsetY;
 
-  // 1. Basic Grid Snap
   newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
   newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
 
-  // 2. MAGNETIC SNAPPING ENGINE
+  // Magnetic Snapping
   componentsData.forEach(other => {
     if (other.id === draggedId) return;
-
-    // Snap Bottom of Dragged to Top of Other
     if (Math.abs((newY + comp.height + SNAP_PADDING) - other.y) < SNAP_RADIUS) {
       newY = other.y - comp.height - SNAP_PADDING;
-    }
-    // Snap Top of Dragged to Bottom of Other
-    else if (Math.abs(newY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) {
+    } else if (Math.abs(newY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) {
       newY = other.y + other.height + SNAP_PADDING;
     }
-
-    // Snap X-Axis (Align Left Edges)
     if (Math.abs(newX - other.x) < SNAP_RADIUS) {
       newX = other.x;
     }
   });
 
-  // Clamp within canvas boundaries
-  comp.x = Math.max(0, Math.min(newX, canvasRect.width - comp.width));
+  comp.x = Math.max(0, newX);
   comp.y = Math.max(0, newY); 
-  
   renderAllComponents();
 }
 
@@ -112,14 +107,13 @@ function handleDrop(e) {
   const type = e.dataTransfer.getData('text/plain');
   if (type && componentSchemas[type]) {
     const canvas = document.getElementById('canvas');
-    const canvasRect = canvas.getBoundingClientRect();
-    let snappedX = Math.round((e.clientX - canvasRect.left) / GRID_SIZE) * GRID_SIZE;
-    let snappedY = Math.round((e.clientY - canvasRect.top) / GRID_SIZE) * GRID_SIZE;
+    let snappedX = Math.round((e.clientX - canvas.getBoundingClientRect().left + canvas.scrollLeft) / GRID_SIZE) * GRID_SIZE;
+    let snappedY = Math.round((e.clientY - canvas.getBoundingClientRect().top + canvas.scrollTop) / GRID_SIZE) * GRID_SIZE;
     
-    const newWidth = 800; // Better default width for website sections
-    const newHeight = 350;
+    // Auto-spawn smaller, manageable sizes so they don't break the screen
+    const newWidth = 600; 
+    const newHeight = 300;
 
-    // Magnetic snap on initial drop
     componentsData.forEach(other => {
       if (Math.abs(snappedY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) snappedY = other.y + other.height + SNAP_PADDING;
       if (Math.abs(snappedX - other.x) < SNAP_RADIUS) snappedX = other.x;
@@ -128,8 +122,8 @@ function handleDrop(e) {
     const newComponent = {
       id: 'comp_' + Date.now() + Math.random(),
       type: type,
-      x: snappedX,
-      y: snappedY,
+      x: Math.max(0, snappedX),
+      y: Math.max(0, snappedY),
       width: newWidth, 
       height: newHeight, 
       content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
@@ -139,8 +133,6 @@ function handleDrop(e) {
     renderAllComponents();
   }
 }
-
-// ... Keep your selectComponent, addResizeHandle, startResize, onResize, stopResize, etc. exactly as they were!
 
 function selectComponent(id) {
   deselectAll();
@@ -194,10 +186,8 @@ function onResize(e) {
   const comp = componentsData.find(c => c.id === selectedId);
   const dx = e.clientX - startX;
   const dy = e.clientY - startY;
-  
   let newWidth = Math.round((startWidth + dx) / GRID_SIZE) * GRID_SIZE;
   let newHeight = Math.round((startHeight + dy) / GRID_SIZE) * GRID_SIZE;
-  
   comp.width = Math.max(150, newWidth);
   comp.height = Math.max(100, newHeight);
   renderAllComponents();
@@ -221,10 +211,13 @@ export function updateComponent(updatedData) {
 
 export function addComponent(type) {
   if (type && componentSchemas[type]) {
+    const canvas = document.getElementById('canvas');
     const newComponent = {
       id: 'comp_' + Date.now() + Math.random(),
       type: type,
-      x: 50, y: 50, width: 800, height: 350,
+      x: canvas.scrollLeft + 50, // Spawns where you are currently looking
+      y: canvas.scrollTop + 50,
+      width: 600, height: 300,
       content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
       styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
     };

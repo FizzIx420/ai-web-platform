@@ -9,13 +9,12 @@ export function renderComponent(comp) {
   container.className = `builder-component type-${comp.type}`;
   Object.assign(container.style, styles.container);
 
-  // Added contenteditable="true" to allow direct typing on the canvas!
   switch (comp.type) {
     case 'hero':
       container.innerHTML = `
         <h1 contenteditable="true" style="${styleToString(styles.title)}">${content.title}</h1>
         <p contenteditable="true" style="${styleToString(styles.subtitle)}">${content.subtitle}</p>
-        <button style="${styleToString(styles.button)}">${content.buttonText}</button>
+        <button contenteditable="true" onclick="event.preventDefault()" style="${styleToString(styles.button)}">${content.buttonText}</button>
       `;
       break;
     case 'features':
@@ -23,7 +22,7 @@ export function renderComponent(comp) {
       content.features.forEach(f => {
         featuresHtml += `
           <div style="${styleToString(styles.featureCard)}">
-            <div style="${styleToString(styles.featureIcon)}">${f.icon}</div>
+            <div contenteditable="true" style="${styleToString(styles.featureIcon)}">${f.icon}</div>
             <h3 contenteditable="true" style="${styleToString(styles.featureTitle)}">${f.title}</h3>
             <p contenteditable="true" style="${styleToString(styles.featureDesc)}">${f.description}</p>
           </div>
@@ -55,11 +54,11 @@ export function renderComponent(comp) {
     case 'contact':
       container.innerHTML = `
         <h2 contenteditable="true" style="${styleToString(styles.title)}">${content.title}</h2>
-        <form style="${styleToString(styles.form)}">
+        <form style="${styleToString(styles.form)}" onsubmit="event.preventDefault()">
           <input type="text" placeholder="${content.namePlaceholder}" style="${styleToString(styles.input)}" />
           <input type="email" placeholder="${content.emailPlaceholder}" style="${styleToString(styles.input)}" />
           <textarea placeholder="${content.messagePlaceholder}" style="${styleToString(styles.input)}"></textarea>
-          <button type="button" style="${styleToString(styles.button)}">${content.buttonText}</button>
+          <button contenteditable="true" type="button" style="${styleToString(styles.button)}">${content.buttonText}</button>
         </form>
       `;
       break;
