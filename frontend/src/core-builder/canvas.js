@@ -9,6 +9,10 @@ let dragOffsetX, dragOffsetY;
 let resizeHandle = null;
 let startX, startY, startWidth, startHeight;
 
+// Panning variables
+let isPanning = false;
+let panStartX, panStartY, scrollStartX, scrollStartY;
+
 const GRID_SIZE = 10; 
 const SNAP_PADDING = 10; 
 const SNAP_RADIUS = 25;  
@@ -16,21 +20,48 @@ const SNAP_RADIUS = 25;
 export function initCanvas() {
   const canvas = document.getElementById('canvas');
   canvas.style.position = 'relative';
-  // REMOVED the locked minHeight that broke scrolling!
   canvas.addEventListener('dragover', (e) => e.preventDefault());
   canvas.addEventListener('drop', handleDrop);
   
-  // Clicking the empty canvas deselects components
   canvas.addEventListener('click', (e) => { 
     if (e.target.id === 'canvas' || e.target.id === 'virtual-space') deselectAll(); 
   });
+
+  // RIGHT-CLICK PANNING LOGIC
+  canvas.addEventListener('mousedown', (e) => {
+    if (e.button === 2 || e.button === 1) { // Right or Middle click
+      e.preventDefault();
+      isPanning = true;
+      panStartX = e.clientX;
+      panStartY = e.clientY;
+      scrollStartX = canvas.scrollLeft;
+      scrollStartY = canvas.scrollTop;
+      canvas.style.cursor = 'grabbing';
+    }
+  });
+
+  window.addEventListener('mousemove', (e) => {
+    if (isPanning) {
+      canvas.scrollLeft = scrollStartX - (e.clientX - panStartX);
+      canvas.scrollTop = scrollStartY - (e.clientY - panStartY);
+    }
+  });
+
+  window.addEventListener('mouseup', () => {
+    if (isPanning) {
+      isPanning = false;
+      canvas.style.cursor = 'default';
+    }
+  });
+
+  // Prevent context menu from ruining the right-click drag
+  canvas.addEventListener('contextmenu', e => e.preventDefault());
+
   renderAllComponents();
 }
 
 function renderAllComponents() {
   const canvas = document.getElementById('canvas');
-  
-  // THE FIX: Inject a massive, invisible 4000x4000 div to force native browser scrolling!
   canvas.innerHTML = '<div id="virtual-space" style="position: absolute; width: 4000px; height: 4000px; top: 0; left: 0; pointer-events: none;"></div>'; 
   
   componentsData.forEach(comp => {
@@ -44,8 +75,8 @@ function renderAllComponents() {
     el.style.cursor = 'move';
     
     el.addEventListener('mousedown', (e) => {
-      if (e.target.isContentEditable || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-      startDrag(e, comp.id);
+      if (e.target.isContentEditable || e.target.tagName === 'INPUT') return;
+      if (e.button === 0) startDrag(e, comp.id); // Only drag on Left Click
     });
     
     el.addEventListener('click', (e) => { 
@@ -71,23 +102,32 @@ function onDrag(e) {
   const canvas = document.getElementById('canvas');
   const comp = componentsData.find(c => c.id === draggedId);
   
-  // Account for canvas scroll position!
   let newX = e.clientX - canvas.getBoundingClientRect().left + canvas.scrollLeft - dragOffsetX;
   let newY = e.clientY - canvas.getBoundingClientRect().top + canvas.scrollTop - dragOffsetY;
 
   newX = Math.round(newX / GRID_SIZE) * GRID_SIZE;
   newY = Math.round(newY / GRID_SIZE) * GRID_SIZE;
 
-  // Magnetic Snapping
+  // 4-WAY MAGNETIC SNAPPING
   componentsData.forEach(other => {
     if (other.id === draggedId) return;
+    
+    // Vertical Snapping (Top/Bottom)
     if (Math.abs((newY + comp.height + SNAP_PADDING) - other.y) < SNAP_RADIUS) {
       newY = other.y - comp.height - SNAP_PADDING;
     } else if (Math.abs(newY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) {
       newY = other.y + other.height + SNAP_PADDING;
+    } else if (Math.abs(newY - other.y) < SNAP_RADIUS) {
+      newY = other.y; // Align Tops exactly
     }
-    if (Math.abs(newX - other.x) < SNAP_RADIUS) {
-      newX = other.x;
+
+    // Horizontal Snapping (Left/Right)
+    if (Math.abs((newX + comp.width + SNAP_PADDING) - other.x) < SNAP_RADIUS) {
+      newX = other.x - comp.width - SNAP_PADDING;
+    } else if (Math.abs(newX - (other.x + other.width + SNAP_PADDING)) < SNAP_RADIUS) {
+      newX = other.x + other.width + SNAP_PADDING;
+    } else if (Math.abs(newX - other.x) < SNAP_RADIUS) {
+      newX = other.x; // Align Lefts exactly
     }
   });
 
@@ -110,22 +150,18 @@ function handleDrop(e) {
     let snappedX = Math.round((e.clientX - canvas.getBoundingClientRect().left + canvas.scrollLeft) / GRID_SIZE) * GRID_SIZE;
     let snappedY = Math.round((e.clientY - canvas.getBoundingClientRect().top + canvas.scrollTop) / GRID_SIZE) * GRID_SIZE;
     
-    // Auto-spawn smaller, manageable sizes so they don't break the screen
-    const newWidth = 600; 
-    const newHeight = 300;
-
-    componentsData.forEach(other => {
-      if (Math.abs(snappedY - (other.y + other.height + SNAP_PADDING)) < SNAP_RADIUS) snappedY = other.y + other.height + SNAP_PADDING;
-      if (Math.abs(snappedX - other.x) < SNAP_RADIUS) snappedX = other.x;
-    });
+    const baseW = 800;
+    const baseH = 350;
 
     const newComponent = {
       id: 'comp_' + Date.now() + Math.random(),
       type: type,
       x: Math.max(0, snappedX),
       y: Math.max(0, snappedY),
-      width: newWidth, 
-      height: newHeight, 
+      baseWidth: baseW, // Saves the native resolution for the scaler
+      baseHeight: baseH,
+      width: baseW, 
+      height: baseH, 
       content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
       styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
     };
@@ -135,6 +171,9 @@ function handleDrop(e) {
 }
 
 function selectComponent(id) {
+  // If we click the already selected component, don't wipe the properties panel
+  if (selectedId === id) return; 
+  
   deselectAll();
   selectedId = id;
   const el = document.querySelector(`[data-id="${id}"]`);
@@ -148,12 +187,15 @@ function deselectAll() {
   if (selectedId) {
     removeResizeHandle();
     selectedId = null;
+    const panel = document.getElementById('properties-panel');
+    if (panel) panel.innerHTML = `<h3>Properties</h3><p>Select a component to edit</p>`;
   }
 }
 
 function addResizeHandle(id) {
   removeResizeHandle();
   const el = document.querySelector(`[data-id="${id}"]`);
+  if(!el) return;
   const handle = document.createElement('div');
   handle.className = 'resize-handle';
   handle.innerHTML = '↘️';
@@ -185,13 +227,21 @@ function onResize(e) {
   if (!selectedId) return;
   const comp = componentsData.find(c => c.id === selectedId);
   const dx = e.clientX - startX;
-  const dy = e.clientY - startY;
-  let newWidth = Math.round((startWidth + dx) / GRID_SIZE) * GRID_SIZE;
-  let newHeight = Math.round((startHeight + dy) / GRID_SIZE) * GRID_SIZE;
-  comp.width = Math.max(150, newWidth);
-  comp.height = Math.max(100, newHeight);
+  
+  // Lock Aspect Ratio while scaling so text doesn't warp
+  let newWidth = Math.max(200, startWidth + dx);
+  let scaleMultiplier = newWidth / startWidth;
+  let newHeight = startHeight * scaleMultiplier;
+
+  comp.width = newWidth;
+  comp.height = newHeight;
+  
   renderAllComponents();
-  selectComponent(selectedId);
+  
+  // Keep the component visually selected without reloading the properties panel
+  const el = document.querySelector(`[data-id="${selectedId}"]`);
+  if (el) el.classList.add('selected');
+  addResizeHandle(selectedId);
 }
 
 function stopResize() {
@@ -200,24 +250,36 @@ function stopResize() {
 }
 
 export function getSelectedComponent() { return componentsData.find(c => c.id === selectedId); }
-export function updateComponent(updatedData) {
+
+// THE FIX: Added reloadProps boolean so typing in textboxes doesn't wipe focus
+export function updateComponent(updatedData, reloadProps = true) {
   const index = componentsData.findIndex(c => c.id === updatedData.id);
   if (index !== -1) {
     componentsData[index] = updatedData;
     renderAllComponents();
-    selectComponent(updatedData.id);
+    if (reloadProps) {
+      selectComponent(updatedData.id);
+    } else {
+      const el = document.querySelector(`[data-id="${updatedData.id}"]`);
+      if (el) el.classList.add('selected');
+      addResizeHandle(updatedData.id);
+    }
   }
 }
 
 export function addComponent(type) {
   if (type && componentSchemas[type]) {
     const canvas = document.getElementById('canvas');
+    const baseW = 800;
+    const baseH = 350;
     const newComponent = {
       id: 'comp_' + Date.now() + Math.random(),
       type: type,
-      x: canvas.scrollLeft + 50, // Spawns where you are currently looking
+      x: canvas.scrollLeft + 50,
       y: canvas.scrollTop + 50,
-      width: 600, height: 300,
+      baseWidth: baseW,
+      baseHeight: baseH,
+      width: baseW, height: baseH,
       content: JSON.parse(JSON.stringify(componentSchemas[type].defaultContent)),
       styles: JSON.parse(JSON.stringify(componentSchemas[type].defaultStyles))
     };
@@ -229,9 +291,7 @@ export function addComponent(type) {
 export function deleteSelectedComponent() {
   if (!selectedId) return;
   componentsData = componentsData.filter(c => c.id !== selectedId);
-  selectedId = null;
-  const panel = document.getElementById('properties-panel');
-  if (panel) panel.innerHTML = `<h3>Properties</h3><p>Select a component to edit</p>`;
+  deselectAll();
   renderAllComponents();
 }
 

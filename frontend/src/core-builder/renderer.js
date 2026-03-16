@@ -5,13 +5,31 @@ export function renderComponent(comp) {
   if (!schema) return document.createElement('div');
 
   const { content, styles } = comp;
-  const container = document.createElement('div');
-  container.className = `builder-component type-${comp.type}`;
-  Object.assign(container.style, styles.container);
+  
+  // 1. OUTER WRAPPER (Handles the boundary limits and border highlighting)
+  const wrapper = document.createElement('div');
+  wrapper.className = `builder-component type-${comp.type}`;
+  wrapper.style.overflow = 'hidden'; 
+  
+  // 2. INNER SCALER (Handles the relative zooming of the content)
+  // Fallback to 800 width if older components don't have a baseWidth saved
+  const safeBaseWidth = comp.baseWidth || 800; 
+  const safeBaseHeight = comp.baseHeight || 350;
+  const scaleRatio = comp.width / safeBaseWidth;
+
+  const inner = document.createElement('div');
+  Object.assign(inner.style, styles.container); // Apply user styles first
+  
+  // Enforce the scale overrides
+  inner.style.transform = `scale(${scaleRatio})`;
+  inner.style.transformOrigin = 'top left';
+  inner.style.width = safeBaseWidth + 'px';
+  inner.style.height = safeBaseHeight + 'px';
+  inner.style.position = 'relative';
 
   switch (comp.type) {
     case 'hero':
-      container.innerHTML = `
+      inner.innerHTML = `
         <h1 contenteditable="true" style="${styleToString(styles.title)}">${content.title}</h1>
         <p contenteditable="true" style="${styleToString(styles.subtitle)}">${content.subtitle}</p>
         <button contenteditable="true" onclick="event.preventDefault()" style="${styleToString(styles.button)}">${content.buttonText}</button>
@@ -28,7 +46,7 @@ export function renderComponent(comp) {
           </div>
         `;
       });
-      container.innerHTML = `
+      inner.innerHTML = `
         <h2 contenteditable="true" style="${styleToString(styles.title)}">${content.title}</h2>
         <div style="${styleToString(styles.featureGrid)}">${featuresHtml}</div>
       `;
@@ -46,13 +64,13 @@ export function renderComponent(comp) {
           </div>
         `;
       });
-      container.innerHTML = `
+      inner.innerHTML = `
         <h2 contenteditable="true" style="${styleToString(styles.title)}">${content.title}</h2>
         <div style="${styleToString(styles.planGrid)}">${plansHtml}</div>
       `;
       break;
     case 'contact':
-      container.innerHTML = `
+      inner.innerHTML = `
         <h2 contenteditable="true" style="${styleToString(styles.title)}">${content.title}</h2>
         <form style="${styleToString(styles.form)}" onsubmit="event.preventDefault()">
           <input type="text" placeholder="${content.namePlaceholder}" style="${styleToString(styles.input)}" />
@@ -67,13 +85,15 @@ export function renderComponent(comp) {
       content.images.forEach(img => {
         imagesHtml += `<img src="${img.src}" alt="${img.alt}" style="${styleToString(styles.image)}" />`;
       });
-      container.innerHTML = `
+      inner.innerHTML = `
         <h2 contenteditable="true" style="${styleToString(styles.title)}">${content.title}</h2>
         <div style="${styleToString(styles.grid)}">${imagesHtml}</div>
       `;
       break;
   }
-  return container;
+
+  wrapper.appendChild(inner);
+  return wrapper;
 }
 
 function styleToString(styleObj) {

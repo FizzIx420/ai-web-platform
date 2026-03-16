@@ -23,12 +23,12 @@ export const componentSchemas = {
       { type: 'color', path: 'styles.container.background', label: 'Background Color' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
       { type: 'color', path: 'styles.subtitle.color', label: 'Subtitle Color' },
-      { type: 'range', path: 'styles.container.borderRadius', label: 'Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderRadius', label: 'Shape Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2), 0 10px 10px -5px rgba(0,0,0,0.04)'] },
       { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
       { type: 'color', path: 'styles.button.background', label: 'Button Color' },
       { type: 'color', path: 'styles.button.color', label: 'Button Text Color' },
-      { type: 'range', path: 'styles.button.borderRadius', label: 'Button Shape', min: 0, max: 50, unit: 'px' }
+      { type: 'number', path: 'styles.button.borderRadius', label: 'Button Shape', min: 0, max: 50, unit: 'px' }
     ]
   },
   features: {
@@ -58,11 +58,11 @@ export const componentSchemas = {
     editableFields: [
       { type: 'color', path: 'styles.container.background', label: 'Background' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
-      { type: 'range', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
       { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
       { type: 'color', path: 'styles.featureCard.background', label: 'Card Background' },
-      { type: 'range', path: 'styles.featureCard.borderRadius', label: 'Card Shape', min: 0, max: 50, unit: 'px' }
+      { type: 'number', path: 'styles.featureCard.borderRadius', label: 'Card Shape', min: 0, max: 50, unit: 'px' }
     ]
   },
   pricing: {
@@ -92,12 +92,12 @@ export const componentSchemas = {
     editableFields: [
       { type: 'color', path: 'styles.container.background', label: 'Background' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
-      { type: 'range', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
       { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
       { type: 'color', path: 'styles.planCard.background', label: 'Card Background' },
       { type: 'color', path: 'styles.planPrice.color', label: 'Price Accent Color' },
-      { type: 'range', path: 'styles.planCard.borderRadius', label: 'Card Shape', min: 0, max: 50, unit: 'px' }
+      { type: 'number', path: 'styles.planCard.borderRadius', label: 'Card Shape', min: 0, max: 50, unit: 'px' }
     ]
   },
   contact: {
@@ -124,12 +124,12 @@ export const componentSchemas = {
     editableFields: [
       { type: 'color', path: 'styles.container.background', label: 'Background' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
-      { type: 'range', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
       { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
       { type: 'color', path: 'styles.button.background', label: 'Button Color' },
-      { type: 'range', path: 'styles.input.borderRadius', label: 'Input Field Shape', min: 0, max: 25, unit: 'px' },
-      { type: 'range', path: 'styles.button.borderRadius', label: 'Button Shape', min: 0, max: 50, unit: 'px' }
+      { type: 'number', path: 'styles.input.borderRadius', label: 'Input Field Shape', min: 0, max: 25, unit: 'px' },
+      { type: 'number', path: 'styles.button.borderRadius', label: 'Button Shape', min: 0, max: 50, unit: 'px' }
     ]
   },
   gallery: {
@@ -156,10 +156,10 @@ export const componentSchemas = {
     editableFields: [
       { type: 'color', path: 'styles.container.background', label: 'Background' },
       { type: 'color', path: 'styles.title.color', label: 'Title Color' },
-      { type: 'range', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
+      { type: 'number', path: 'styles.container.borderRadius', label: 'Main Shape Roundness', min: 0, max: 150, unit: 'px' },
       { type: 'select', path: 'styles.container.boxShadow', label: 'Material Shadow', options: ['none', '0 4px 6px rgba(0,0,0,0.1)', '0 20px 25px -5px rgba(0,0,0,0.2)'] },
       { type: 'select', path: 'styles.container.backdropFilter', label: 'Glassmorphism Blur', options: ['none', 'blur(5px)', 'blur(15px)', 'blur(30px)'] },
-      { type: 'range', path: 'styles.image.borderRadius', label: 'Image Roundness', min: 0, max: 150, unit: 'px' }
+      { type: 'number', path: 'styles.image.borderRadius', label: 'Image Roundness', min: 0, max: 150, unit: 'px' }
     ]
   }
 };
