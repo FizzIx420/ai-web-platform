@@ -10,3 +10,8 @@
 
 - Added `.github/workflows/release-zip-policy-check.yml`, a read-only guard that checks future build workflows use the local release ZIP publisher and all temporary Actions artifact uploads set one-day retention.
 - The guard does not publish or delete artifacts. It will run automatically on the next push/PR; runtime verification is pending.
+
+## 2026-10-24: Fix final release publisher shell block
+
+- Removed the redundant closing `fi` from the shared release publisher. Intermediate draft ZIPs and final published ZIPs now follow a syntactically balanced shell block.
+- The policy guard continues to prohibit Actions artifact uploads and require release ZIP publishing for build outputs. Runtime verification pending.
